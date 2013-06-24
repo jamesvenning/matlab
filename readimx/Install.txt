@@ -1,0 +1,29 @@
+Installation:
+
+1. Download the latest ReadIMX Loader package (file readimx4matlab_vX.X.zip)
+   from the download section of our homepage: http://www.lavision.de.
+
+2. Extract the ZIP file in an installation folder on your PC
+   ( e.g. C:\Programme\MATLAB704\toolbox\matlab\readimx).
+
+3. Start the Matlab programm and add the installation folder to the Matlab
+   search path. For our example, use the command:
+
+   >>addpath C:\Programme\MATLAB704\toolbox\matlab\readimx
+
+4. Test the installation by the command:
+
+   >>help readimx
+
+   This command should print the readimx help text on the Matlab console.
+
+5. Use the manual for detailed information
+   (file C:\Programme\MATLAB704\toolbox\matlab\readimx.pdf)
+   
+Note: For a quick update replace the already existing files readimx.dll,
+      readimx.m and showimx.m. The file readim7.dll can be replaced by the
+      file readimx.dll.
+
+
+
+
