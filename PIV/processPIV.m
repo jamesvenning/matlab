@@ -1,8 +1,9 @@
-function processPIV( Tamb, Pamb, type )
+function processPIV( Tamb, Pamb, type, varargin )
 %PROCESSPIV
 
 
 % Declare program parameters
+pivFolder = '\\gdtl-nas\LST\RFoA\Experiments\PIV';
 resFolder = '\\gdtl-nas\LST\RFoA\Experiments\Results';
 
 
@@ -32,6 +33,11 @@ if nargin<2
 	clear dlgPrompt dlgTitle dlgAnswer
 end
 
+% Look for additional processing flags
+if any( strcmpi(varargin,'conditional') )
+	conditionalAverage = true;
+end
+
 % Convert ambient conditions to SI units
 Tamb = f2k(Tamb);			% Convert temperature from °F to K
 Pamb = mbar2pa(Pamb);		% Convert pressure from mbar to Pa
@@ -39,7 +45,7 @@ Pamb = mbar2pa(Pamb);		% Convert pressure from mbar to Pa
 
 %% Begin main program
 
-dayFolder = uigetdir();
+dayFolder = uigetdir(pivFolder,'Select the DAY FOLDER');
 
 % Find PostProc folder paths
 subdirs = genpath( dayFolder );								% Get recursive subdirectories
@@ -78,6 +84,16 @@ for j=1:J
  	% Remove any bad images
  	bad = findBadImages( U, V );
  	U = U(:,:,~bad);	V = V(:,:,~bad);	W = W(:,:,~bad);
+	
+	clear bad
+	
+	% Select similar images for conditional averaging
+	if exist('conditionalAverage','var')
+		sim = findSimilarImages( U, V, 0.8, 1 );
+		U = U(:,:,sim);		V = V(:,:,sim);		W = W(:,:,sim);
+		
+		clear sim
+	end
 	
 	% Calculate mean/std profiles for each component
 	[N,Um,Urms] = nzstats( U, 3 );
