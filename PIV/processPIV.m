@@ -34,8 +34,25 @@ if nargin<2
 end
 
 % Look for additional processing flags
+if any( strcmpi(varargin,'results') )
+	% Override the output folder
+	i = find( strcmpi(varargin,'results') );
+	if ischar( varargin{i+1}),	resFolder = varargin{i+1};
+	else						error('Results folder must be followed by path string.');
+	end
+	
+	clear i
+end
 if any( strcmpi(varargin,'conditional') )
-	conditionalAverage = true;
+	% Use a conditional ensemble average
+	i = find( strcmpi(varargin,'conditional') );
+	if isnumeric(varargin{i+1}),	condAvgThresh = varargin{i+1};
+	else							error('Conditional flag must be followed by numeric threshold.');
+	end
+	
+	condAvg = true;
+	
+	clear i
 end
 
 % Convert ambient conditions to SI units
@@ -79,7 +96,7 @@ for j=1:J
 	
 	% Load all selected files
 	[ X,Y,Z, U,V,W ] = loadVC7( pp{j}, fs, type );
-	nImgs = size( U, 3 );
+	nLoaded = size( U, 3 );
 	
  	% Remove any bad images
  	bad = findBadImages( U, V );
@@ -88,12 +105,14 @@ for j=1:J
 	clear bad
 	
 	% Select similar images for conditional averaging
-	if exist('conditionalAverage','var')
-		sim = findSimilarImages( U, V, 0.8, 1 );
+	if exist('condAvg','var') && condAvg
+		sim = findSimilarImages( U, V, condAvgThresh, 1 );
 		U = U(:,:,sim);		V = V(:,:,sim);		W = W(:,:,sim);
 		
 		clear sim
 	end
+	
+	nUsed = size( U, 3 );
 	
 	% Calculate mean/std profiles for each component
 	[N,Um,Urms] = nzstats( U, 3 );
@@ -123,7 +142,7 @@ for j=1:J
 	out.Tamb	= measurement( 'Ambient Temperature', 'T_{amb}', 'K', Tamb );
 	out.Pamb	= measurement( 'Ambient Pressure', 'p_{amb}', 'Pa', Pamb );
 	
-	out.N		= measurement( 'Number of Images', 'N', '', N );
+	out.N		= measurement( 'Number of Samples', 'N', '', N );
 	out.type	= measurement( 'PIV Type', '', '', type );
 	out.source	= measurement( 'Source Location', '', '', pp{j} );
 	
@@ -142,7 +161,7 @@ for j=1:J
 	out.timestamp.value{1} = [ acqdate '. Acquired using ' acqtype '.' ];
 
 	avgdate = datestr( now, 31 );
-	out.timestamp.value{2} = [ avgdate '. Ensemble averaged using ' num2str(nImgs) ' images.' ];
+	out.timestamp.value{2} = [ avgdate '. Ensemble averaged using ' num2str(nUsed) ' of ' num2str(nLoaded) ' images.' ];
 
 	clear acqdate acqtype avgdate nImgs
 	

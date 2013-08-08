@@ -23,9 +23,6 @@ for n=1:nFiles
 	ff = fullfile( d, fs{n} );
 	a = load( ff );
 	
-	% Invert the y-axis
-	a.Y.value = fliplr( -a.Y.value );
-	
 	% Load a list of all the variables
 	vars = fieldnames(a);
 	
@@ -44,6 +41,10 @@ for n=1:nFiles
 		a.(var).value = flipdim( a.(var).value, 1 );
 		
 	end
+	
+	% Invert the y-axis
+	a.Y.value = fliplr( -a.Y.value );
+	a.Vm.value = -a.Vm.value;
 	
 	% Timestamp for flipping
 	stamp = [ datestr( now, 31 ) '. Flipped top to bottom.' ];

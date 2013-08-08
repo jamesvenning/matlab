@@ -10,10 +10,22 @@ end
 if ischar(fs), fs={fs}; end
 
 % Translation and normalization parameters
-Xo		= -121.323;			% Trailing edge X coordinate [mm]
-Yo		= 40.5226;			% Trailing edge Y coordinate [mm]
-Zo		= 0;				% Trailing edge Z coordinate [mm]
-D		= 30.48;			% Airfoil thickness [mm]
+if exist( fullfile(d,'origin.m'), 'file' )
+	% Load the parameters from a script if available
+	run( fullfile(d,'origin.m') );
+	if ~( exist('Xo','var') && exist('Yo','var') && exist('Zo','var') && exist('D','var') )
+		error('Not all parameters defined in origin script.');
+	end
+else
+	% Otherwise ask user for parameters
+	
+	% Save parameters to script for future use
+	sprintf( [	'Xo	= %d;		% Trailing edge X coordinate [mm]\n'
+				'Yo	= %d;		% Trailing edge Y coordinate [mm]\n'
+				'Zo	= %d;		% Trailing edge Z coordinate [mm]\n'
+				'D	= %d;		% Airfoil thickness [mm]' ], ...
+				Xo, Yo, Zo, D );
+end
 
 % Create output directory if it doesn't exist
 dout = fullfile( d, 'normed' );

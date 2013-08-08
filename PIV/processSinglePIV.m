@@ -91,7 +91,7 @@ for j=1:J
 	out.Tamb	= measurement( 'Ambient Temperature', 'T_{amb}', 'K', Tamb );
 	out.Pamb	= measurement( 'Ambient Pressure', 'p_{amb}', 'Pa', Pamb );
 	
-	out.N		= measurement( 'Number of Images', 'N', '', N );
+	out.N		= measurement( 'Number of Samples', 'N', '', N );
 	out.type	= measurement( 'PIV Type', '', '', type );
 	
 	clear X Y Z Um Vm Wm Urms Vrms Wrms N
