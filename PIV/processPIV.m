@@ -37,23 +37,26 @@ end
 if any( strcmpi(varargin,'results') )
 	% Override the output folder
 	i = find( strcmpi(varargin,'results') );
-	if ischar( varargin{i+1}),	resFolder = varargin{i+1};
-	else						error('Results folder must be followed by path string.');
+	if ischar(varargin{i+1}),		resFolder = varargin{i+1};
+	else							error('Results flag must be followed by path string.');
 	end
-	
-	clear i
+end
+if any( strcmpi(varargin,'group') )
+	% Group like configurations together
+	i = find( strcmpi(varargin,'group') );
+	if islogical(varargin{i+1}),	group = varargin{i+1};
+	else							error('Group flag must be followed by boolean.');
+	end
 end
 if any( strcmpi(varargin,'conditional') )
 	% Use a conditional ensemble average
 	i = find( strcmpi(varargin,'conditional') );
-	if isnumeric(varargin{i+1}),	condAvgThresh = varargin{i+1};
+	if isnumeric(varargin{i+1}),	condThresh = varargin{i+1};
 	else							error('Conditional flag must be followed by numeric threshold.');
 	end
-	
-	condAvg = true;
-	
-	clear i
 end
+
+clear i
 
 % Convert ambient conditions to SI units
 Tamb = f2k(Tamb);			% Convert temperature from °F to K
@@ -86,16 +89,32 @@ for j=1:J
 	run		= dd{dayIndex+1};		% Extract name of specific run/case
 	
 	clear dd dayIndex
-
-	% Remove iteration from run
-	conf = regexprep( run, '_[0-9]{2}$', '' );
-
-	% Select all VC7 files in PostProc folder
-	fs = dir( fullfile( pp{j}, '*.vc7' ) );
-	fs = {fs.name}';
+	
+	if exist('group','var') && group
+		% Skip this run if it's a repeat configuration (already loaded)
+		if regexp( run, '_[0-9]{2}$' ), continue; end
+		
+		% Select VC7 files from grouped PostProc folders
+		i=0; fs=[]; src=[];
+		while (j+i)<=J && ~isempty(strfind(pp{j+i},run))
+			dlist = dir( fullfile( pp{j+i}, '*.vc7' ) );
+			fs = [ fs; strcat( pp{j+i}, '\', {dlist.name}' ) ];
+			src{i+1} = pp{j+i};
+			i = i+1;
+		end
+		
+		if length(src)==1, src=src{1}; end
+	else
+		% Select VC7 files from this PostProc folder
+		dlist = dir( fullfile( pp{j}, '*.vc7') );
+		fs = strcat( pp{j}, '\', {dlist.name}' );
+		src = pp{j};
+	end
+	
+	clear i dlist
 	
 	% Load all selected files
-	[ X,Y,Z, U,V,W ] = loadVC7( pp{j}, fs, type );
+	[ X,Y,Z, U,V,W ] = loadVC7( fs, type );
 	nLoaded = size( U, 3 );
 	
  	% Remove any bad images
@@ -105,8 +124,8 @@ for j=1:J
 	clear bad
 	
 	% Select similar images for conditional averaging
-	if exist('condAvg','var') && condAvg
-		sim = findSimilarImages( U, V, condAvgThresh, 1 );
+	if exist('condThresh','var') && condThresh>0
+		sim = findSimilarImages( U, V, condThresh, 1 );
 		U = U(:,:,sim);		V = V(:,:,sim);		W = W(:,:,sim);
 		
 		clear sim
@@ -144,7 +163,7 @@ for j=1:J
 	
 	out.N		= measurement( 'Number of Samples', 'N', '', N );
 	out.type	= measurement( 'PIV Type', '', '', type );
-	out.source	= measurement( 'Source Location', '', '', pp{j} );
+	out.source	= measurement( 'Source Location', '', '', src );
 	
 	clear X Y Z Um Vm Wm Urms Vrms Wrms N
 	
@@ -172,7 +191,7 @@ for j=1:J
 	save( fout, '-struct', 'out' );
 	fprintf( '\tVelocity component averages exported: %s\n', fout );
 	
-	clear proj day run conf fs N out dout fout
+	clear proj day run fs N out dout fout
 
 	fprintf('\n');
 end

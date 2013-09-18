@@ -13,18 +13,20 @@ if ischar(fs), fs={fs}; end
 if exist( fullfile(d,'origin.m'), 'file' )
 	% Load the parameters from a script if available
 	run( fullfile(d,'origin.m') );
-	if ~( exist('Xo','var') && exist('Yo','var') && exist('Zo','var') && exist('D','var') )
-		error('Not all parameters defined in origin script.');
-	end
 else
 	% Otherwise ask user for parameters
 	
 	% Save parameters to script for future use
-	sprintf( [	'Xo	= %d;		% Trailing edge X coordinate [mm]\n'
-				'Yo	= %d;		% Trailing edge Y coordinate [mm]\n'
-				'Zo	= %d;		% Trailing edge Z coordinate [mm]\n'
-				'D	= %d;		% Airfoil thickness [mm]' ], ...
-				Xo, Yo, Zo, D );
+	fid = fopen( fullfile(d,'origin.m') );
+	fprintf( fid, [ ...
+		'Xo	= %d;		% Trailing edge X coordinate [mm]\n' ...
+		'Yo	= %d;		% Trailing edge Y coordinate [mm]\n' ...
+		'Zo	= %d;		% Trailing edge Z coordinate [mm]\n' ...
+		'D	= %d;		% Airfoil thickness [mm]' ...
+		], Xo, Yo, Zo, D );
+	fclose(fid);
+	
+	clear fid
 end
 
 % Create output directory if it doesn't exist

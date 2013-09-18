@@ -1,5 +1,8 @@
 function [ fsout, dout ] = averagePIV( fs, d )
 %AVERAGEPIV Average a set of PIV files.
+%	Mean velocity is averaged using  A* = ?( N·A )/?( N )  and RMS velocity
+%	is averaged using  A* = ?[ ?( (N-1)·A² )/?( N )]  where (·) is
+%	element-wise multiplication.
 
 
 % Check inputs
@@ -20,7 +23,7 @@ conf = regexprep( runs, '_[0-9]{2}$', '' );
 % Each case has a unique configuration
 cases = unique(conf);
 
-%
+% Average all runs of each case
 nCases = length(cases);
 for n=1:nCases
 	

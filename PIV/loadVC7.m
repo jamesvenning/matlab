@@ -1,11 +1,11 @@
-function [ X,Y,Z, U,V,W ] = loadVC7( d, fs, pivtype )
+function [ X,Y,Z, U,V,W ] = loadVC7( fs, pivtype )
 % Load a set of VC7 files
 % NOTE: This version of loadVC7 uses transformations specific to the
 % low-speed wind tunnel.
 
 
 fprintf( '<a href="">Loading VC7 data...</a>\n' );
-fprintf( '\tData folder selected: %s\n', d );
+%fprintf( '\tData folder selected: %s\n', d );
 
 % Allow for single file input as string
 if ischar(fs), fs={fs}; end
@@ -15,10 +15,7 @@ if ischar(fs), fs={fs}; end
 nFiles = length(fs);
 
 % Get first file
-f = fullfile( d, fs{1} );
-imx = readimx(f);
-
-clear f
+imx = readimx( fs{1} );
 
 h = figure;			% Create temporary home for showimx vector plot
 if rem(pivtype,2)==0
@@ -49,10 +46,7 @@ clear imx h
 
 for i=2:nFiles
 	% Get current file
-	f = fullfile( d, fs{i} );
-    imx = readimx(f);
-	
-	clear f
+    imx = readimx( fs{i} );
 	
 	h = figure;		% Create temporary home for showimx vector plot
 	if rem(pivtype,2)==0

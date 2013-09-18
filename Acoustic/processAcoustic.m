@@ -12,7 +12,7 @@ if ischar(fs), fs={fs}; end
 
 if ~exist( 'gain', 'var' )
 	% If no gain is specified, just assume the standard value
-	gain = 31.6e-3;		% [V/Pa]
+	gain = 10.0e-3;		% [V/Pa]
 end
 
 %%
