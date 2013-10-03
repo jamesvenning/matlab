@@ -41,8 +41,7 @@ for n=1:nFiles
 	a = load( ff );
 	
  	% Get the freestream velocity
-	sample = a.Um.value(end-2:end,:);			% USE THIS ONE FOR ATE
-% 	sample = a.Um.value(10:70,10:30);			% USE THIS ONE FOR ALE
+	sample = a.Um.value( samp_row, samp_col );
 	Uinf = nanmean( sample(:) );
 	
 	% Perform a coordinate shift

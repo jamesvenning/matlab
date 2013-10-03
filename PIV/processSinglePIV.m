@@ -61,7 +61,7 @@ for j=1:J
 	image = regexp( fs{j}, '\d+', 'match', 'once' );
 		
 	% Load single selected file
-	[ X,Y,Z, U,V,W ] = loadVC7( d, fs{j}, type );
+	[ X,Y,Z, U,V,W ] = loadVC7( fullfile(d,fs{j}), type );
 		
 	% Calculate mean/std profiles for each component
 	[N,Um,Urms] = nzstats( U, 3 );
