@@ -9,10 +9,8 @@ end
 
 if ischar(fs), fs={fs}; end
 
-%% Load each file and calculate the swirling strength
+%% Process the filenames
 for n=1:length(fs)
-	
-	a = load( fullfile(d,fs{n}) );
 	
 	% Extract the frequency
 	s = regexpi( fs{n}, 'ff(?<ff>[0-9]+)', 'names' );
@@ -26,28 +24,13 @@ for n=1:length(fs)
 		pa(n) = str2double( s.pa );
 	end
 	
-	% 
-	if n==1, [x y]=meshgrid(a.X.value,a.Y.value); end
-	u = a.Um.value;
-	v = a.Vm.value;
-	
-	% Condition the matrices
-	u( isnan(u) | isinf(u) ) = 0;
-	v( isnan(v) | isinf(v) ) = 0;
-	
-	% Calculate the swirling strength
-	[~,L1] = VortexID(x,y,u,v);
-	
-	% Apply a simple smoothing filter and store
-	L(:,:,n) = filter2( ones(3)/9, L1 );
-	
 end
 
-%% Order the stack by frequency, then by phase
+% Order the files by frequency, then by phase
 [~,i] = sortrows([ ff' pa' ]);
 ff = ff(i);
 pa = pa(i);
-L = L(:,:,i);
+fs = fs(i);
 
 %% Create an animated GIF for each frequency
 uff = unique( ff );
@@ -56,13 +39,33 @@ for n=1:length(uff)
 	
 	fset = find( ff == uff(n) );
 	
-	% First frame
-	fh = figure(n); ah = axes;
-	pcolor( x, y, L(:,:,fset(1)) ); shading interp; axis image;
-	c = colorbar; set(get(c,'ylabel'),'string','L [Hz]');
-	xlabel( a.X.describe ); ylabel( a.Y.describe ); caxis([0 2]);
-	title([ 'f_F = ' num2str(uff(n)) ' Hz' ]);
+	% FIRST FRAME
+	a = load( fullfile( d, fs{fset(1)} ) );
 	
+	% 
+	[x y]=meshgrid(a.X.value,a.Y.value);
+	u = a.Um.value;		v = a.Vm.value;
+	
+	% Condition the matrices
+	u( isnan(u) | isinf(u) ) = 0;
+	v( isnan(v) | isinf(v) ) = 0;
+	
+	% Calculate the swirling strength
+	[~,L1] = VortexID(x,y,u,v);
+	
+	% Apply a simple smoothing filter
+	L1 = filter2( ones(3)/9, L1 );
+	
+	% Plot the swirling strength
+	fh = figure; ah = axes;
+	pcolor( x, y, L1 ); shading interp; axis image;
+	c = colorbar; caxis([0 2]);
+	
+	% Label everything
+	set(get(c,'ylabel'),'string','L [Hz]');
+	xlabel( a.X.describe ); ylabel( a.Y.describe );
+	title([ 'f_F = ' num2str(uff(n)) ' Hz' ]);
+
 	drawNACA( '0015', 15 );
 	
 	set(fh,'color','w');
@@ -73,13 +76,32 @@ for n=1:length(uff)
 	frame = getframe(fh);
 	[im,map] = rgb2ind(frame.cdata,256,'nodither');
 	
-	% Remaining frames
+	% REMAINING FRAMES
 	for k=2:length(fset)
 		
+		a = load( fullfile( d, fs{fset(k)} ) );
+		
+		% 
+		u = a.Um.value;		v = a.Vm.value;
+		
+		% Condition the matrices
+		u( isnan(u) | isinf(u) ) = 0;
+		v( isnan(v) | isinf(v) ) = 0;
+		
+		% Calculate the swirling strength
+		[~,L1] = VortexID(x,y,u,v);
+		
+		% Apply a simple smoothing filter
+		L1 = filter2( ones(3)/9, L1 );
+		
+		% Plot the swirling strength
 		clf(fh); ah = axes;
-		pcolor( x, y, L(:,:,fset(k)) ); shading interp; axis image;
-		c = colorbar; set(get(c,'ylabel'),'string','L [Hz]');
-		xlabel( a.X.describe ); ylabel( a.Y.describe ); caxis([0 2]);
+		pcolor( x, y, L1 ); shading interp; axis image;
+		c = colorbar; caxis([0 2]);
+		
+		% Label everything
+		set(get(c,'ylabel'),'string','L [Hz]');
+		xlabel( a.X.describe ); ylabel( a.Y.describe );
 		title([ 'f_F = ' num2str(uff(n)) ' Hz' ]);
 		
 		drawNACA( '0015', 15 );
