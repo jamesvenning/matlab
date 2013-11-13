@@ -19,7 +19,7 @@
 % Slightly modified by Alan Blankman, LeCroy Corporation, 2006
 % July 2007; added decoding of TrigTime_array so that sequence mode waveforms decode correctly
 
-function wave=ReadLeCroyBinaryWaveform(fn)
+function wave=readLeCroyBinaryWaveform(fn)
 %%
 %---------------------------------------------------------------------------------------
 % Open File

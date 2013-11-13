@@ -9,6 +9,7 @@ if ischar(fs), fs={fs}; end
 
 nFiles = length(fs);
 for n=1:nFiles
+	
 	ff = fullfile( d, fs{n} );
 	load( ff );
 	
@@ -20,6 +21,8 @@ for n=1:nFiles
 		c = colorbar; set( get(c,'ylabel'), 'string', Um.symbol );
 		ylabel( Y.describe );
 		title( Um.name );
+		
+	if isempty(Um.units), caxis([-0.5 1.5]); end
 	
 	subplot(2,1,2); axis equal;
 		pcolor( X.value, Y.value, Vm.value ); shading interp;
@@ -27,4 +30,7 @@ for n=1:nFiles
 		c = colorbar; set( get(c,'ylabel'), 'string', Vm.symbol );
 		xlabel( X.describe ); ylabel( Y.describe );
 		title( Vm.name );
+		
+	if isempty(Vm.units), caxis([-0.6 0.4]); end
+		
 end

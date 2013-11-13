@@ -60,9 +60,12 @@ q = atan2( b(2)-a(2), b(1)-a(1) );
 [x y] = rotate( x, y, q );
 [x y] = translate( x, y, a );
 
+% Guarantee the airfoil is on top of all other data
+z = 0.1*ones(size(x));
+
 % Draw the airfoil
 hold on;
-fill( x, y, 'k' );
+fill3( x, y, z, 'k' );
 hold off;
 
 
