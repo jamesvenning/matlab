@@ -104,7 +104,7 @@ out.Po		= measurement( 'Stagnation Pressure', 'p_o', 'Pa', Po );
 out.Pinf	= measurement( 'Freestream Pressure', '-p_\infty', 'Pa', Pinf );
 out.Pamb	= measurement( 'Ambient Pressure', 'p_{amb}', 'Pa', Pamb );
 
-out.Tinf	= measurement( 'Stagnation Temperature', 'T_\infty', 'K', Tinf );
+out.Tinf	= measurement( 'Freestream Temperature', 'T_\infty', 'K', Tinf );
 out.Tamb	= measurement( 'Ambient Temperature', 'T_{amb}', 'K', Tamb );
 
 out.source	= measurement( 'Source Location', '', '', d );

@@ -24,7 +24,7 @@ for n = 1:nFiles
     
     % Calculate coefficient of drag
     yd = data.Y.value./30.5; % dimensionless vertical position
-    Ufree = sqrt(2*(data.Po.value+data.Pinf.value)*R*data.To.value/(data.Pamb.value-data.Pinf.value));
+    Ufree = sqrt(2*(data.Po.value+data.Pinf.value)*R*data.Tinf.value/(data.Pamb.value-data.Pinf.value));
     Unorm = data.Um.value/Ufree; % dimensionless velocity
     Cd(n) = trapz(yd,(Unorm).*(1-Unorm));
         

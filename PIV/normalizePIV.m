@@ -40,9 +40,17 @@ for n=1:nFiles
 	ff = fullfile( d, fs{n} );
 	a = load( ff );
 	
- 	% Get the freestream velocity
-	sample = a.Um.value( samp_row, samp_col );
-	Uinf = nanmean( sample(:) );
+	% Get the tunnel conditions
+	tc		= inputdlg('Tinf [°F], Po ["h2o], Pinf ["h2o]',fs{n},[1 50]);
+	tc		= str2num(tc{1});
+	Tinf	= f2k( tc(1) );
+	Po		= in2pa( tc(2) );
+	Pinf	= in2pa( tc(3) );
+	
+ 	% Calculate the freestream velocity
+% 	sample = a.Um.value( samp_row, samp_col );
+% 	Uinf = nanmean( sample(:) );
+	[Uinf Re] = manometer( Tinf, Po, Pinf, a.Pamb.value );
 	
 	% Perform a coordinate shift
 	a.X.value = a.X.value - Xo;
@@ -84,9 +92,13 @@ for n=1:nFiles
 		
 	end
 	
-	% Include D and Uinf
+	% Include new measurements
 	a.D		= measurement( 'Airfoil Thickness', 'D', 'mm', D );
+	a.Tinf	= measurement( 'Freestream Temperature', 'T_\infty', 'K', Tinf );
+	a.Po	= measurement( 'Stagnation Pressure', 'p_o', 'Pa', Po );
+	a.Pinf	= measurement( 'Freestream Pressure', '-p_\infty', 'Pa', Pinf );
 	a.Uinf	= measurement( 'Freestream Velocity', 'u_\infty', 'm/s', Uinf );
+	a.Re	= measurement( 'Reynolds Number', 'Re', '', Re );
 	
 	% Timestamp for normalization
 	stamp = [ datestr( now, 31 ) '. Normalized using D=' num2str(D) ' mm and Uinf=' num2str(Uinf) ' m/s.' ];
