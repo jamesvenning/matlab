@@ -32,7 +32,7 @@ for n=1:nFiles
 	data = load( ff );
 	
 	% Get the time series, sampling period, and block size
-	t		= data(:,1);
+	t		= data(:,1) - data(1,1);
 	dt		= t(2)-t(1);
 	t0		= t - dt*( 0:length(t)-1 )';		% Find the time jumps
 	blkSz	= sum( t0 < 1e-10 );				% Block size
