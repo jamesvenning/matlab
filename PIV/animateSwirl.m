@@ -46,15 +46,16 @@ for n=1:length(uff)
 	[x y]=meshgrid(a.X.value,a.Y.value);
 	u = a.Um.value;		v = a.Vm.value;
 	
+	% Apply a simple smoothing filter
+	u = filter2( ones(3)/9, u );
+	v = filter2( ones(3)/9, v );
+	
 	% Condition the matrices
 	u( isnan(u) | isinf(u) ) = 0;
 	v( isnan(v) | isinf(v) ) = 0;
 	
 	% Calculate the swirling strength
 	[~,L1] = VortexID(x,y,u,v);
-	
-	% Apply a simple smoothing filter
-	L1 = filter2( ones(3)/9, L1 );
 	
 	% Plot the swirling strength
 	fh = figure; ah = axes;
@@ -84,15 +85,16 @@ for n=1:length(uff)
 		% 
 		u = a.Um.value;		v = a.Vm.value;
 		
+		% Apply a simple smoothing filter
+		u = filter2( ones(3)/9, u );
+		v = filter2( ones(3)/9, v );
+		
 		% Condition the matrices
 		u( isnan(u) | isinf(u) ) = 0;
 		v( isnan(v) | isinf(v) ) = 0;
 		
 		% Calculate the swirling strength
 		[~,L1] = VortexID(x,y,u,v);
-		
-		% Apply a simple smoothing filter
-		L1 = filter2( ones(3)/9, L1 );
 		
 		% Plot the swirling strength
 		clf(fh); ah = axes;
