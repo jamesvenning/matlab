@@ -1,4 +1,4 @@
-function [ X,Y,Z, U,V,W ] = loadVC7( fs, pivtype )
+function [ X,Y,Z, U,V,W ] = loadVC7( fs, pivtype, frame )
 % Load a set of VC7 files
 % NOTE: This version of loadVC7 uses transformations specific to the
 % low-speed wind tunnel.
@@ -10,6 +10,9 @@ fprintf( '<a href="">Loading VC7 data...</a>\n' );
 % Allow for single file input as string
 if ischar(fs), fs={fs}; end
 
+% Use the first frame if none specified
+if nargin<3, frame=1; end
+
 %% Load the first image and preallocate matrices
 
 nFiles = length(fs);
@@ -20,7 +23,7 @@ imx = readimx( fs{1} );
 h = figure;			% Create temporary home for showimx vector plot
 if rem(pivtype,2)==0
 	% 2D PIV
-	[ x1,x2, u1,u2 ] = showimx(imx);
+	[ x1,x2, u1,u2 ] = showimx( imx, frame );
 	
 	if nFiles>1
 		u1(:,:,nFiles) = zeros( size(u1) );
@@ -29,7 +32,7 @@ if rem(pivtype,2)==0
 	
 else
 	% 3D PIV
-	[ x1,x2,x3, u1,u2,u3 ] = showimx(imx);
+	[ x1,x2,x3, u1,u2,u3 ] = showimx( imx, frame );
 	
 	if nFiles>1
 		u1(:,:,nFiles) = zeros( size(u1) );
@@ -51,11 +54,11 @@ for i=2:nFiles
 	h = figure;		% Create temporary home for showimx vector plot
 	if rem(pivtype,2)==0
 		% 2D PIV
-		[ ~,~, u1(:,:,i),u2(:,:,i) ] = showimx(imx);
+		[ ~,~, u1(:,:,i),u2(:,:,i) ] = showimx( imx, frame );
 
 	else
 		% 3D PIV
-		[ ~,~,~, u1(:,:,i),u2(:,:,i),u3(:,:,i) ] = showimx(imx);
+		[ ~,~,~, u1(:,:,i),u2(:,:,i),u3(:,:,i) ] = showimx( imx, frame );
 
 	end
 	close(h);		% Close showimx vector plot
