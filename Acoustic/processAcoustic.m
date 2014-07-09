@@ -35,7 +35,7 @@ for n=1:nFiles
 	t		= data(:,1) - data(1,1);
 	dt		= t(2)-t(1);
 	t0		= t - dt*( 0:length(t)-1 )';		% Find the time jumps
-	blkSz	= sum( t0 < 1e-10 );				% Block size
+	blkSz	= find( t0>1e-10, 1, 'first' )-1;	% Block size
 	nBlk	= length(t)/blkSz;					% Number of blocks
 	
 	clear t t0
