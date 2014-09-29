@@ -2,7 +2,7 @@ function [ h ] = plotAcoustic( fs, d, varargin )
 %PLOTACOUSTIC Generate a plot of selected acoustic spectra.
 
 % Program defaults
-c1		= 0.0509;					% Blockage height [m]
+c1		= 0.059;					% Blockage height [m]
 sep		= 10;						% Separation between spectra [dB]
 offset	= 0;						% Offset of spectra [dB]
 annoX	= 0.03;						% X location of St annotations
