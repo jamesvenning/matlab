@@ -34,9 +34,9 @@ for n=1:nFiles
 	% Get the time series, sampling period, and block size
 	t		= data(:,1) - data(1,1);
 	dt		= t(2)-t(1);
-	t0		= t - dt*( 0:length(t)-1 )';		% Find the time jumps
-	blkSz	= find( t0>1e-10, 1, 'first' )-1;	% Block size
-	nBlk	= length(t)/blkSz;					% Number of blocks
+	t0		= abs( t - dt*( 0:length(t)-1 )' );		% Find the time jumps
+	blkSz	= find( t0>1e-10, 1, 'first' )-1;		% Block size
+	nBlk	= length(t)/blkSz;						% Number of blocks
 	
 	clear t t0
 	
@@ -82,9 +82,9 @@ Pinf	= mean( Pinf );
 % Load the ambient conditions
 ff = fullfile( d, 'ambient.txt' );
 data = load(ff);
-Tamb = f2k( data(1) );			% [K]
-Tinf = f2k( data(2) );			% [K]
-Pamb = mbar2pa( data(3) );		% [Pa]
+Tamb = f2k( mean(data(:,1)) );			% [K]
+Tinf = f2k( mean(data(:,2)) );			% [K]
+Pamb = mbar2pa( mean(data(:,3)) );		% [Pa]
 
 %%
 % Make sure values are properly ordered (x then y)
