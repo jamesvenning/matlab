@@ -1,23 +1,24 @@
-function processStaticPressure( airfoil, dataFolder )
+function processStaticPressure( airfoil, dayFolder, covered )
 % Processes static pressure data taken using the Scanivalve system.
 
 
-% Declare program parameters
-cpFolder = '\\gdtl-nas\LST\RFoA\Experiments\Static Pressure';
-resFolder = '\\gdtl-nas\LST\RFoA\Experiments\Results';
+% Program defaults
+cpFolder	= '\\gdtl-nas\LST\RFoA\Experiments\Static Pressure';
+resFolder	= '\\gdtl-nas\LST\RFoA\Experiments\Results';
+k			= 1.05;		% Tunnel calibration constant, see Little 2010 p.33
 
 %% Check the inputs
 if ~exist( 'airfoil', 'var' )
 	airfoil = input( 'Which airfoil did you test with? ', 's' );
 end
 
-if ~exist( 'dataFolder', 'var' )
+if ~exist( 'dayFolder', 'var' )
 	dayFolder = uigetdir( cpFolder, 'Select the data containing folder' );
 end
 
-%% Declare constants and load tap locations
-k		= 1.05;			% Tunnel calibration constant, see Little 2010 p.33
-[xc cc]	= getTapLocations( airfoil );
+if ~exist( 'covered', 'var' )
+	covered = input( 'Which taps were covered? ' );
+end
 
 %% Begin main program
 allFiles = dir( fullfile(dayFolder,'*.txt') );
@@ -56,12 +57,18 @@ for n=1:nFiles
 	N		= size(P,1);					% Number of samples
 
 	clear data
+	
+	% Load tap locations
+	[xc cc ut]	= getTapLocations( airfoil );
 
 	% Remove pressure data from open/unused transducers
-	ci = [ 26:32, 43:48 ];
-	P(:,ci) = [];
+	P(:,ut) = [];
 	
-	clear ci
+	clear ut
+	
+	% Remove taps covered by actuators
+	xc(:,covered) = [];
+	P(:,covered) = [];
 
 	% Calculate Cp and Cl
 	[Cp Cl]	= calcCpCl( xc, P, Pinf, Q, cc );
@@ -80,11 +87,10 @@ for n=1:nFiles
 	Pinf	= mean( Pinf );
 
 	% Close the Cp curve
-	xc1 = xc;
-	if cc, xc1(end+1) = xc1(1); end
+	if cc, xc(end+1) = xc(1); end
 
 	% Prepare outputs
-	out.xc		= measurement( 'Chordwise Location', '|x/c|', '', xc1 );
+	out.xc		= measurement( 'Chordwise Location', '|x/c|', '', xc );
 	out.Cp		= measurement( 'Pressure Coefficient', 'C_p', '', Cp );
 	out.Cp_rms	= measurement( 'RMS of Pressure Coefficient', 'C_{p,rms}', '', Cp_rms );
 
@@ -100,7 +106,7 @@ for n=1:nFiles
 
 	out.source	= measurement( 'Source Location', '', '', dayFolder );
 
- 	clear xc1 Cp Cp_rms Cl Cl_rms Tamb Pamb Tinf Po Pinf
+ 	clear xc cc Cp Cp_rms Cl Cl_rms Tamb Pamb Tinf Po Pinf
 
 	% Timestamp for acquisition and averaging
 	out.timestamp = measurement( 'Timestamp History' );
