@@ -2,9 +2,12 @@ function processPIV( Tamb, Pamb, type, varargin )
 %PROCESSPIV
 
 
-% Declare program parameters
-pivFolder = '\\gdtl-nas\LST\RFoA\Experiments\PIV';
-resFolder = '\\gdtl-nas\LST\RFoA\Experiments\Results';
+% Program defaults
+pivFolder	= '\\gdtl-nas\LST\RFoA\Experiments\PIV';
+resFolder	= '\\gdtl-nas\LST\RFoA\Experiments\Results';
+finalForm	= 'PostProc';	% Folder name of final processing step
+group		= false;		% Group like configurations?
+condThresh	= -1;			% Conditional threshold (-1 to disable)
 
 
 %% Process inputs
@@ -41,6 +44,13 @@ if any( strcmpi(varargin,'results') )
 	else							error('Results flag must be followed by path string.');
 	end
 end
+if any( strcmpi(varargin,'finalform') )
+	% Override the final process folder
+	i = find( strcmpi(varargin,'finalform') );
+	if ischar(varargin{i+1}),		finalForm = varargin{i+1};
+	else							error('Final flag must be followed by string.');
+	end
+end
 if any( strcmpi(varargin,'group') )
 	% Group like configurations together
 	i = find( strcmpi(varargin,'group') );
@@ -70,7 +80,7 @@ dayFolder = uigetdir(pivFolder,'Select the DAY FOLDER');
 % Find PostProc folder paths
 subdirs = genpath( dayFolder );								% Get recursive subdirectories
 subdirs = regexpi( subdirs, ';', 'split' );					% Reformat into cell array
-keep = ~cellfun(@isempty,regexpi(subdirs,'PostProc$'));		% Tag each path that ends in 'PostProc'
+keep = ~cellfun(@isempty,regexpi(subdirs,[finalForm '$']));	% Tag each path that ends in 'PostProc'
 pp = subdirs(keep);											% Keep tagged paths
 
 clear subdirs keep
@@ -90,7 +100,7 @@ for j=1:J
 	
 	clear dd dayIndex
 	
-	if exist('group','var') && group
+	if group
 		% Skip this run if it's a repeat configuration (already loaded)
 		if regexp( run, '_[0-9]{2}$' ), continue; end
 		
@@ -124,7 +134,7 @@ for j=1:J
 	clear bad
 	
 	% Select similar images for conditional averaging
-	if exist('condThresh','var') && condThresh>0
+	if condThresh>0
 		sim = findSimilarImages( U, V, condThresh, 1 );
 		U = U(:,:,sim);		V = V(:,:,sim);		W = W(:,:,sim);
 		
