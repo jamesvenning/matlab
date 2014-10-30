@@ -14,14 +14,14 @@ for n=1:length(fs)
 	
 	% Extract the frequency
 	s = regexpi( fs{n}, 'ff(?<ff>[0-9]+)', 'names' );
-	ff(n) = str2double( s.ff );
+	if isempty(s),		ff(n) = 0;
+	else				ff(n) = str2double( s.ff );
+	end
 	
 	% Extract the phase
 	s = regexpi( fs{n}, 'pa(?<pa>[0-9]+)', 'names' );
-	if isempty(s)
-		pa(n) = 0;
-	else
-		pa(n) = str2double( s.pa );
+	if isempty(s),		pa(n) = 0;
+	else				pa(n) = str2double( s.pa );
 	end
 	
 end

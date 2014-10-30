@@ -1,4 +1,4 @@
-function [ h ] = plotAcoustic( fs, d, varargin )
+function [ h ] = plotAcoustic( varargin )
 %PLOTACOUSTIC Generate a plot of selected acoustic spectra.
 
 % Program defaults
@@ -9,11 +9,13 @@ annoX	= 0.03;						% X location of St annotations
 
 %% Process inputs
 
-% Request inputs if none are given
-if ~exist( 'fs', 'var' )
-	[fs d] = uigetfile( '.mat', 'MultiSelect', 'on' );
+% Get list of spectra to plot
+if ~isempty(varargin) && iscell(varargin{1})
+	fs = varargin{1};
+else
+	fs = uigetfile( '.mat', 'MultiSelect', 'on' );
+	if ischar(fs), fs={fs}; end
 end
-if ischar(fs), fs={fs}; end
 
 % Look for additional plotting flags
 if any( strcmpi(varargin,'separation') )
@@ -83,7 +85,7 @@ end
 
 % Annotate y-axis separation
 xx = [1.8 2.2 2.2 1.8]*1e-2;
-yy = floor(annoY/10)*10 - [10 10 20 20];
+yy = round(annoY/10)*10 - [10 10 20 20];
 hold on; plot( xx, yy, '-k', 'linewidth', 2 );
 text( 2.5e-2, mean(yy), [num2str(sep) ' dB'], ...
 	'background', 'white' ...
