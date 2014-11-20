@@ -8,6 +8,7 @@ resFolder	= '\\gdtl-nas\LST\RFoA\Experiments\Results';
 finalForm	= 'PostProc';	% Folder name of final processing step
 group		= false;		% Group like configurations?
 condThresh	= -1;			% Conditional threshold (-1 to disable)
+lim			= -1;			% Maximum number of images (-1 to disable)
 
 
 %% Process inputs
@@ -26,7 +27,7 @@ if nargin<3
 end
 if nargin<2
 	% Request ambient conditions
-	dlgPrompt = { 'Ambient temperature [°F]', 'Ambient pressure [mbar]' };
+	dlgPrompt = { 'Ambient temperature [ï¿½F]', 'Ambient pressure [mbar]' };
 	dlgTitle = 'Ambient Conditions';
 	dlgAnswer = inputdlg( dlgPrompt, dlgTitle );
 	
@@ -65,11 +66,18 @@ if any( strcmpi(varargin,'conditional') )
 	else							error('Conditional flag must be followed by numeric threshold.');
 	end
 end
+if any( strcmpi(varargin,'limit') )
+	% Limit the maximum number of images
+	i = find( strcmpi(varargin,'limit') );
+	if isnumeric(varargin{i+1}),	lim = varargin{i+1};
+	else							error('Limit flag must be followed by numeric threshold.');
+	end
+end
 
 clear i
 
 % Convert ambient conditions to SI units
-Tamb = f2k(Tamb);			% Convert temperature from °F to K
+Tamb = f2k(Tamb);			% Convert temperature from ï¿½F to K
 Pamb = mbar2pa(Pamb);		% Convert pressure from mbar to Pa
 
 
@@ -77,22 +85,28 @@ Pamb = mbar2pa(Pamb);		% Convert pressure from mbar to Pa
 
 dayFolder = uigetdir(pivFolder,'Select the DAY FOLDER');
 
-% Find PostProc folder paths
+clc;
+fprintf( 'Processing PIV folder: "%s"\n\n', dayFolder );
+
+% Find 'PostProc' folder paths
+fprintf( 'Searching for "%s" folders...', finalForm );
 subdirs = genpath( dayFolder );								% Get recursive subdirectories
-subdirs = regexpi( subdirs, ';', 'split' );					% Reformat into cell array
+subdirs = regexpi( subdirs, pathsep, 'split' );				% Reformat into cell array
 keep = ~cellfun(@isempty,regexpi(subdirs,[finalForm '$']));	% Tag each path that ends in 'PostProc'
 pp = subdirs(keep);											% Keep tagged paths
 
 clear subdirs keep
 
-% Process each PostProc folder
 J = length(pp);
+fprintf( ' %g found.\n\n', J );
+
+% Process each PostProc folder
 for j=1:J
 	% Extract folder ancestry from path
-	dd = regexpi( pp{j}, '\', 'split' );
+	dd = regexpi( pp{j}, filesep, 'split' );
 
 	% Figure out which ancestor is the day
-	dayIndex = length( find( dayFolder == '\' ) ) + 1;
+	dayIndex = length( find( dayFolder == filesep ) ) + 1;
 
 	proj	= dd{dayIndex-1};		% Extract name of project
 	day		= dd{dayIndex};			% Extract day
@@ -100,25 +114,34 @@ for j=1:J
 	
 	clear dd dayIndex
 	
+	fprintf( 'Processing run %g of %g: "%s"\n', j, J, run );
+	
 	if group
 		% Skip this run if it's a repeat configuration (already loaded)
-		if regexp( run, '_[0-9]{2}$' ), continue; end
+		if regexp( run, '_[0-9]{2}$' )
+			fprintf( 'Already processed.\n\n' );
+			continue;
+		end
 		
 		% Select VC7 files from grouped PostProc folders
 		i=0; fs=[]; src=[];
 		while (j+i)<=J && ~isempty(strfind(pp{j+i},run))
-			dlist = dir( fullfile( pp{j+i}, '*.vc7' ) );
-			fs = [ fs; strcat( pp{j+i}, '\', {dlist.name}' ) ];
+			dlist = dir( fullfile( pp{j+i}, '*.VC7' ) );
+			fs = [ fs; strcat( pp{j+i}, filesep, {dlist.name}' ) ];
 			src{i+1} = pp{j+i};
 			i = i+1;
 		end
 		
 		if length(src)==1, src=src{1}; end
+		
+		fprintf( 'Found %g "VC7" files in %g folders.\n', length(fs), i );
 	else
 		% Select VC7 files from this PostProc folder
-		dlist = dir( fullfile( pp{j}, '*.vc7') );
-		fs = strcat( pp{j}, '\', {dlist.name}' );
+		dlist = dir( fullfile( pp{j}, '*.VC7') );
+		fs = strcat( pp{j}, filesep, {dlist.name}' );
 		src = pp{j};
+		
+		fprintf( 'Found %g "VC7" files.\n', length(fs) );
 	end
 	
 	clear i dlist
@@ -141,12 +164,22 @@ for j=1:J
 		clear sim
 	end
 	
+	% Reduce set to specified maximum
+	if lim>0 && lim<=size(U,3)
+		fprintf( 'Downsampling to %g images...', lim );
+		U = U(:,:,1:lim);	V = V(:,:,1:lim);	W = W(:,:,1:lim);
+		fprintf( ' success.\n' );
+	end
+		
 	nUsed = size( U, 3 );
+	fprintf( 'Using %g of %g images available.\n', nUsed, nLoaded );
 	
 	% Calculate mean/std profiles for each component
+	fprintf( 'Calculating mean and standard deviation...' );
 	[N,Um,Urms] = nzstats( U, 3 );
 	[~,Vm,Vrms] = nzstats( V, 3 );
 	[~,Wm,Wrms] = nzstats( W, 3 );
+	fprintf( ' success.\n' );
 	
 	clear U V W
 
@@ -156,6 +189,8 @@ for j=1:J
 	Wm( Wm == 0 ) = NaN;		Wrms( Wrms == 0 ) = NaN;
 	
 	% Prepare outputs
+	fprintf( 'Preparing output file...' );
+	
 	out.X		= measurement( 'Streamwise Coordinate', 'x', 'mm', X );
 	out.Y		= measurement( 'Vertical Coordinate', 'y', 'mm', Y );
 	out.Z		= measurement( 'Spanwise Coordinate', 'z', 'mm', Z );
@@ -194,12 +229,14 @@ for j=1:J
 
 	clear acqdate acqtype avgdate nImgs
 	
+	fprintf( ' success.\n' );
+	
 	% Export average of each run
 	dout = fullfile( resFolder, proj, day );
 	if ~exist(dout,'dir'), mkdir(dout); end
 	fout = fullfile( dout, [run '.mat'] );
 	save( fout, '-struct', 'out' );
-	fprintf( '\tVelocity component averages exported: %s\n', fout );
+	fprintf( 'Processed PIV data exported: "%s"\n', fout );
 	
 	clear proj day run fs N out dout fout
 

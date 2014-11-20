@@ -2,6 +2,8 @@ function [ similar ] = findSimilarImages( U, V, thresh, k )
 %FINDSIMILARIMAGES
 
 
+fprintf( 'Detecting images with correlation > %g...', thresh );
+
 %
 if nargin<3, thresh = 0.8; end
 if nargin<4, k = 1; end
@@ -25,7 +27,11 @@ ccTotals = sum( cc, 2 );
 i = i(k);
 ccSubset = cc(i,:);
 
-% Downselect based on correlation threshold
-similar = ( ccSubset > thresh );
+% Sort by correlation value (useful when reducing set)
+[ccSubset j] = sort(ccSubset,'descend');
 
-fprintf( '\tDownselected %g similar images.\n', sum(similar) );
+% Downselect based on correlation threshold
+keep = ( ccSubset > thresh );
+similar = j(keep);
+
+fprintf( ' downselected %g images.\n', sum(keep) );

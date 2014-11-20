@@ -4,8 +4,7 @@ function [ X,Y,Z, U,V,W ] = loadVC7( fs, pivtype, frame )
 % low-speed wind tunnel.
 
 
-fprintf( '<a href="">Loading VC7 data...</a>\n' );
-%fprintf( '\tData folder selected: %s\n', d );
+fprintf( 'Loading VC7 data...' );
 
 % Allow for single file input as string
 if ischar(fs), fs={fs}; end
@@ -103,4 +102,4 @@ W = permute( W, [2 1 3] );
 
 %% Done!
 
-fprintf( '\tSuccessfully loaded %g files.\n', nFiles );
+fprintf( ' successfully loaded %g files.\n', nFiles );

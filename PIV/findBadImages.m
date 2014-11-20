@@ -2,6 +2,8 @@ function [ bad ] = findBadImages( U, V )
 %FINDBADIMAGES
 
 
+fprintf( 'Detecting bad images...' );
+
 N = size(U,3);
 
 bad = false(1,N);
@@ -38,4 +40,4 @@ for n=1:N
 	
 end
 
-fprintf( '\tDetected %g bad images.\n', sum(bad) );
+fprintf( ' %g images removed.\n', sum(bad) );
