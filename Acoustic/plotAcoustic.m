@@ -5,7 +5,10 @@ function [ h ] = plotAcoustic( varargin )
 c1		= 0.059;					% Blockage height [m]
 sep		= 10;						% Separation between spectra [dB]
 offset	= 0;						% Offset of spectra [dB]
+dy		= 10;						% Y-axis grid increment [dB]
 annoX	= 0.03;						% X location of St annotations
+underlay= false;					% Underlay cases with the baseline?
+order	= [];						% Specific ordering of spectra
 
 %% Process inputs
 
@@ -32,6 +35,27 @@ if any( strcmpi(varargin,'offset') )
 	else							error('Offset flag must be followed by numeric value.');
 	end
 end
+if any( strcmpi(varargin,'grid') )
+	% Override the grid size
+	i = find( strcmpi(varargin,'grid') );
+	if isnumeric(varargin{i+1}),	dy = varargin{i+1};
+	else							error('Grid flag must be followed by numeric value.');
+	end
+end
+if any( strcmpi(varargin,'baselineUnderlay') )
+	% Underlay every case with the baseline
+	i = find( strcmpi(varargin,'baselineUnderlay') );
+	if islogical(varargin{i+1}),	underlay = varargin{i+1};
+	else							error('Baseline underlay flag must be followed by boolean value.');
+	end
+end
+if any( strcmpi(varargin,'order') )
+	% Specify spectra order
+	i = find( strcmpi(varargin,'order') );
+	if isnumeric(varargin{i+1}),	order = varargin{i+1};
+	else							error('Order flag must be followed by numeric value.');
+	end
+end
 
 %% Reorganize files and determine non-dimensionalization
 
@@ -43,13 +67,22 @@ for n=1:length(fs)
 
 end
 
-% Sort file set by ascending frequency
-[ff i] = sort(ff);
-fs = fs(i);
+if ~isempty(order)
+	% Sort according to manual input
+	fs = fs(order);
+else
+	% Otherwise, sort by ascending frequency
+	[ff i] = sort(ff);
+	fs = fs(i);
+end
 
 % Determine baseline non-dimensionalization factor (length over velocity)
-bl = load( fs{ff==0} );
-l_v = c1/manometer( bl.Tinf.value, bl.Po.value, bl.Pinf.value, bl.Pamb.value );
+if any(ff==0)
+	bl = load( fs{find(ff==0,1,'first')} );		% Use the first, if more than one
+	l_v = c1/manometer( bl.Tinf.value, bl.Po.value, bl.Pinf.value, bl.Pamb.value );
+else
+	l_v = 1;
+end
 
 % Non-dimentionalize the excitation frequencies
 Stf = ff*l_v;
@@ -67,8 +100,30 @@ end
 
 %% Generate the plot
 
+figure;
+
+% Plot a bunch of baselines
+if underlay
+	if ~exist('bl','var')
+		
+		warning('No baseline provided, skipping underlay.');
+		
+	else
+
+		for n=1:length(fs),	dB_bl(:,n) = bl.PSD.value + (1-n)*sep + offset;
+		end
+
+		h = semilogx( St, dB_bl, ...
+			'color', [0.5 0.5 0.5], ...
+			'handlevisibility', 'off' ...		% Hide from legend
+			);
+		hold on;
+	
+	end
+end
+
 % Plot all loaded spectra
-figure; semilogx( St, dB );
+semilogx( St, dB );
 
 % Annotate each spectrum with corresponding Strouhal number
 for n=1:length(fs)
@@ -85,9 +140,9 @@ end
 
 % Annotate y-axis separation
 xx = [1.8 2.2 2.2 1.8]*1e-2;
-yy = round(annoY/10)*10 - [10 10 20 20];
+yy = round(annoY/dy)*dy - dy*[1 1 2 2];
 hold on; plot( xx, yy, '-k', 'linewidth', 2 );
-text( 2.5e-2, mean(yy), [num2str(sep) ' dB'], ...
+text( 2.5e-2, mean(yy), [num2str(dy) ' dB'], ...
 	'background', 'white' ...
 	);
 
@@ -95,7 +150,7 @@ text( 2.5e-2, mean(yy), [num2str(sep) ' dB'], ...
 grid on;
 set( gca, ...
 	'xlim', [0.02 2], ...
-	'ytick', -400:sep:200, ...
+	'ytick', -400:dy:200, ...
 	'yticklabel', [] ...
 	);
 
