@@ -1,1 +1,5 @@
+# Ignore MATLAB autosave files
 *.asv
+
+# Don't include readimx, since it contains proprietary code
+readimx/
