@@ -1,4 +1,4 @@
-function processStaticPressure( airfoil, dayFolder, covered )
+function processStaticPressure( airfoil, dayFolder, covered, aa )
 % Processes static pressure data taken using the Scanivalve system.
 
 
@@ -18,6 +18,10 @@ end
 
 if ~exist( 'covered', 'var' )
 	covered = input( 'Which taps were covered? ' );
+end
+
+if ~exist( 'aa', 'var' )
+	aa = input( 'What was the angle of attack (in degrees)? ' );
 end
 
 %% Begin main program
@@ -40,7 +44,9 @@ nFiles = length(allFiles);
 for n=1:nFiles
 	% Extract name of specific run/case
 	run		= regexprep( allFiles{n}, '.txt', '' );
-	
+	aa      = regexpi( run, 'aa(?<aa>[\d]+)', 'names' );
+    aa      = str2double(aa.aa);
+    
 	% Load raw data from txt file
 	data	= load( fullfile(dayFolder,allFiles{n} ));
 
@@ -59,27 +65,36 @@ for n=1:nFiles
 	clear data
 	
 	% Load tap locations
-	[xc cc ut]	= getTapLocations( airfoil );
-
+	[xc cc ut H]	= getTapLocations( airfoil );
+    H = H + aa*pi/180;
+       
 	% Remove pressure data from open/unused transducers
 	P(:,ut) = [];
 	
 	clear ut
 	
+    % Reorder Pressure Data for Boeing VR7 Airfoil
+    if any(strcmpi(airfoil,{'a3','Boeing-VR7'}))
+        P = [ P(:,1:2:end) P(:,end:-2:2) ];
+    end
+    
 	% Remove taps covered by actuators
-	xc(:,covered) = [];
+	xc(covered) = [];
+    H(covered) = [];
 	P(:,covered) = [];
 
 	% Calculate Cp and Cl
-	[Cp Cl]	= calcCpCl( xc, P, Pinf, Q, cc );
+	[Cp Cl Cd]	= calcCpCl( xc, H, P, Pinf, Q, cc );
 	
 	clear Q P
 
 	% Perform column-wise statistics
 	Cp_rms	= std( Cp, 0, 1 );
 	Cl_rms	= std( Cl );
+    Cd_rms  = std( Cd );
 	Cp		= mean( Cp, 1 );
 	Cl		= mean( Cl );
+    Cd      = mean( Cd );
 	Tinf	= mean( Tinf );
 	Tamb	= mean( Tamb );
 	Pamb	= mean( Pamb );
@@ -97,6 +112,9 @@ for n=1:nFiles
 	out.Cl		= measurement( 'Lift Coefficient', 'C_L', '', Cl );
 	out.Cl_rms	= measurement( 'RMS of Lift Coefficient', 'C_{L,rms}', '', Cl_rms );
 
+    out.Cd		= measurement( 'Drag Coefficient', 'C_D', '', Cd );
+	out.Cd_rms	= measurement( 'RMS of Drag Coefficient', 'C_{D,rms}', '', Cd_rms );
+    
 	out.Tamb	= measurement( 'Ambient Temperature', 'T_{amb}', 'K', Tamb );
 	out.Pamb	= measurement( 'Ambient Pressure', 'p_{amb}', 'Pa', Pamb );
 
@@ -106,7 +124,7 @@ for n=1:nFiles
 
 	out.source	= measurement( 'Source Location', '', '', dayFolder );
 
- 	clear xc cc Cp Cp_rms Cl Cl_rms Tamb Pamb Tinf Po Pinf
+ 	clear xc cc Cp Cp_rms Cl Cl_rms Cd Cd_rms Tamb Pamb Tinf Po Pinf
 
 	% Timestamp for acquisition and averaging
 	out.timestamp = measurement( 'Timestamp History' );

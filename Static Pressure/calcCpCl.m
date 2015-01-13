@@ -1,4 +1,4 @@
-function [ Cp Cl ] = calcCpCl( xc, P, Pinf, Q, close )
+function [ Cp Cl Cd ] = calcCpCl( xc, H, P, Pinf, Q, close )
 % Calculates Cp and Cl given the tap locations and pressure information.
 
 
@@ -20,7 +20,9 @@ end
 if close
 	Cp(:,end+1) = Cp(:,1);
 	xc(end+1) = xc(1);
+    H(end+1) = H(1);
 end
 
-% Integrate Cp to get Cl
-Cl = -trapz( xc, Cp' );
+% Integrate Cp to get lift and drag
+Cl = -trapz( xc, Cp.*repmat(sin(H),nSamp,1), 2 );
+Cd = -trapz( xc, Cp.*repmat(cos(H),nSamp,1), 2 );
