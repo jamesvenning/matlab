@@ -22,7 +22,11 @@ imx = readimx( fs{1} );
 h = figure;			% Create temporary home for showimx vector plot
 if rem(pivtype,2)==0
 	% 2D PIV
-	[ x1,x2, u1,u2 ] = showimx( imx, frame );
+	vec = showimx( imx.Frames{frame} );
+	x1 = vec.X;
+	x2 = vec.Y;
+	u1 = vec.U;
+	u2 = vec.V;
 	
 	if nFiles>1
 		u1(:,:,nFiles) = zeros( size(u1) );
@@ -31,7 +35,13 @@ if rem(pivtype,2)==0
 	
 else
 	% 3D PIV
-	[ x1,x2,x3, u1,u2,u3 ] = showimx( imx, frame );
+	vec = showimx( imx.Frames{frame} );
+	x1 = vec.X;
+	x2 = vec.Y;
+	x3 = vec.Z;
+	u1 = vec.U;
+	u2 = vec.V;
+	u3 = vec.W;
 	
 	if nFiles>1
 		u1(:,:,nFiles) = zeros( size(u1) );
@@ -53,11 +63,16 @@ for i=2:nFiles
 	h = figure;		% Create temporary home for showimx vector plot
 	if rem(pivtype,2)==0
 		% 2D PIV
-		[ ~,~, u1(:,:,i),u2(:,:,i) ] = showimx( imx, frame );
+		vec = showimx( imx.Frames{frame} );
+		u1(:,:,i) = vec.U;
+		u2(:,:,i) = vec.V;
 
 	else
 		% 3D PIV
-		[ ~,~,~, u1(:,:,i),u2(:,:,i),u3(:,:,i) ] = showimx( imx, frame );
+		vec = showimx( imx.Frames{frame} );
+		u1(:,:,i) = vec.U;
+		u2(:,:,i) = vec.V;
+		u3(:,:,i) = vec.W;
 
 	end
 	close(h);		% Close showimx vector plot

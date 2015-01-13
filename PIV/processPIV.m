@@ -3,8 +3,8 @@ function processPIV( Tamb, Pamb, type, varargin )
 
 
 % Program defaults
-pivFolder	= '\\gdtl-nas\LST\RFoA\Experiments\PIV';
-resFolder	= '\\gdtl-nas\LST\RFoA\Experiments\Results';
+pivFolder	= [ getenv('matpref_expFolder') filesep 'PIV' ];
+resFolder	= [ getenv('matpref_expFolder') filesep 'Results' ];
 finalForm	= 'PostProc';	% Folder name of final processing step
 group		= false;		% Group like configurations?
 condThresh	= -1;			% Conditional threshold (-1 to disable)
@@ -75,6 +75,11 @@ if any( strcmpi(varargin,'limit') )
 end
 
 clear i
+
+% Double-check the results folder to avoid errors
+if ~exist(resFolder,'dir')
+	resFolder = uigetdir(pwd,'Select the RESULTS FOLDER');
+end
 
 % Convert ambient conditions to SI units
 Tamb = f2k(Tamb);			% Convert temperature from �F to K
