@@ -5,6 +5,8 @@ function processStaticPressure( airfoil, dayFolder, covered, aa )
 % Program defaults
 cpFolder	= '\\gdtl-nas\LST\RFoA\Experiments\Static Pressure';
 resFolder	= '\\gdtl-nas\LST\RFoA\Experiments\Results';
+% cpFolder	= 'Y:\VR7\Experiments\Static Pressure';
+% resFolder	= 'Y:\VR7\Experiments\Results';
 k			= 1.05;		% Tunnel calibration constant, see Little 2010 p.33
 
 %% Check the inputs
@@ -46,7 +48,7 @@ for n=1:nFiles
 	run		= regexprep( allFiles{n}, '.txt', '' );
 	aa      = regexpi( run, 'aa(?<aa>[\d]+)', 'names' );
     aa      = str2double(aa.aa);
-    
+
 	% Load raw data from txt file
 	data	= load( fullfile(dayFolder,allFiles{n} ));
 
@@ -58,26 +60,27 @@ for n=1:nFiles
 	Pinf	= in2pa( data(:,5) );			% Freestream pressure, [Pa]
 	P		= psi2pa( data(:,6:end) );		% Static surface pressure, [Pa]
 
-	Q		= k*( Po + Pinf );				% Dynamic pressure, [Pa]
+	bc		= blockageCorrFactor( airfoil, aa );	% Blockage correction factor
+	Q		= k*( Po + Pinf )*( 1 + 2*bc );			% Dynamic pressure (with blockage correction), [Pa]
 
 	N		= size(P,1);					% Number of samples
 
-	clear data
-	
+	clear data bc
+
 	% Load tap locations
 	[xc cc ut H]	= getTapLocations( airfoil );
-    H = H + aa*pi/180;
-       
+    H = H - aa*pi/180;
+
 	% Remove pressure data from open/unused transducers
 	P(:,ut) = [];
-	
+
 	clear ut
-	
+
     % Reorder Pressure Data for Boeing VR7 Airfoil
     if any(strcmpi(airfoil,{'a3','Boeing-VR7'}))
-        P = [ P(:,1:2:end) P(:,end:-2:2) ];
+        P = [ P(:,1) P(:,2:2:(end-2)) P(:,end:-1:(end-1)) fliplr(P(:,3:2:(end-2))) ];
     end
-    
+
 	% Remove taps covered by actuators
 	xc(covered) = [];
     H(covered) = [];
@@ -85,7 +88,7 @@ for n=1:nFiles
 
 	% Calculate Cp and Cl
 	[Cp Cl Cd]	= calcCpCl( xc, H, P, Pinf, Q, cc );
-	
+
 	clear Q P
 
 	% Perform column-wise statistics

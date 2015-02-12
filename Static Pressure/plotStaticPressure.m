@@ -23,6 +23,12 @@ for n=1:length(fs)
 	
 	s = regexpi( fs{n}, 'ff(?<ff>[0-9]+)', 'names' );
 	ff(n) = str2double(s.ff);
+    
+    s = regexpi( fs{n}, 'aa(?<ff>[0-9]+)', 'names' );
+	aa(n) = str2double(s.ff);
+    
+    s = regexpi( fs{n}, 're(?<ff>[0-9]+)', 'names' );
+	re(n) = str2double(s.ff);
 
 end
 
@@ -31,8 +37,12 @@ end
 fs = fs(i);
 
 % Determine baseline non-dimensionalization factor (length over velocity)
-bl = load( fs{ff==0} );
-l_v = c1/manometer( bl.Tinf.value, bl.Po.value, bl.Pinf.value, bl.Pamb.value );
+if any(ff==0)
+    bl = load( fs{find(ff==0,1,'first')} );		% Use the first, if more than one
+    l_v = c1/manometer( bl.Tinf.value, bl.Po.value, bl.Pinf.value, bl.Pamb.value );
+else
+    l_v = 1;
+end
 
 % Non-dimentionalize the excitation frequencies
 Stf = ff*l_v;
@@ -45,23 +55,56 @@ for n=1:length(fs)
 	
 	xc(:,n) = a.xc.value;
 	Cp(:,n) = a.Cp.value;
+    Cl(n) = a.Cl.value;
+    Cd(n) = a.Cd.value;
 	
 end
 
-%% Generate the plot
+%% Generate primary plot ( Cp vs x/c )
 
-% Plot all loaded spectra
+% Determine varying parameter
+
+[~,I]=sort([sum(abs(diff(aa))>0),sum(abs(diff(re))),sum(abs(diff(ff)))],'descend');
+
+if I(1)==1
+    xx = aa;
+    xl = 'Angle of Attack [\circ]';
+elseif I(2)==1
+    xx = re;
+    xl = 'Reynolds Number';
+else
+	xx = Stf;
+    xl = 'Strohal Number';
+end
+
+% Plot all loaded contours
 figure; plot( xc, Cp );
 
 % Format axes
 grid on;
 set( gca, ...
 	'xlim', [0 1], ...
-	'xdir', 'reverse', ...
+	'xdir', 'normal', ...
 	'ydir', 'reverse' ...
 	);
 
 xlabel(a.xc.describe); ylabel(a.Cp.describe);
 
 % Generate legend
-legend( num2str(Stf','%.2f'), 'location', 'southeast' );
+if any(ff==0)
+    legend( num2str(xx','%.2f'), 'location', 'southeast' );
+else
+    legend( num2str(xx','%g'), 'location', 'southeast' );
+end
+
+%% Generate secondary plots ( Lift and Drag vs ? )
+
+% Lift
+figure; plot( xx, Cl )
+grid on;
+xlabel(xl); ylabel('Coefficient of Lift');
+
+% Drag
+figure; plot( xx, Cd )
+grid on;
+xlabel(xl); ylabel('Coefficient of Drag');

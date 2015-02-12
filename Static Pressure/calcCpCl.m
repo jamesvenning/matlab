@@ -16,13 +16,24 @@ for n = 1:nSamp
   	Cp(n,:) = ( P(n,:) + Pinf(n) )/Q(n);
 end
 
+% Find last pressure tab
+I	= find( xc==max(xc), 1, 'first' );
+
+% Re-order data for easy integration
+xc	= [ -fliplr( xc(1:I) )	fliplr( xc((I+1):end) ) ];
+H	= [ fliplr( H(1:I) )	fliplr( H((I+1):end) ) ];
+Cp	= [ fliplr( Cp(:,1:I ))	fliplr( Cp(:,(I+1):end) ) ];
+
 % Close the Cp curve
 if close
-	Cp(:,end+1) = Cp(:,1);
-	xc(end+1) = xc(1);
-    H(end+1) = H(1);
+	Cp(:,end+1)	= Cp(:,1);
+	xc(end+1)	= -xc(1);
+    H(end+1)	= H(1);
 end
 
 % Integrate Cp to get lift and drag
-Cl = -trapz( xc, Cp.*repmat(sin(H),nSamp,1), 2 );
-Cd = -trapz( xc, Cp.*repmat(cos(H),nSamp,1), 2 );
+Cl	= -trapz( xc, Cp.*repmat(sin(H),nSamp,1), 2 );
+Cd	= -trapz( xc, Cp.*repmat(cos(H),nSamp,1), 2 );
+
+% Re-order Cp back to standard
+Cp	= [ fliplr(Cp(:,1:I))	fliplr(Cp(:,(I+1):end)) ];
