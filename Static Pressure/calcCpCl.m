@@ -39,9 +39,9 @@ ds	= sqrt( diff(xc).^2 + diff(yc).^2 );
 s	= cumsum( [0 ds] );
 
 % Lift and drag
-Ht	= H + aoa*pi/180;
+Ht	= H - aoa*pi/180;
 Cl	= -trapz( s, Cp.*repmat(sin(Ht),nSamp,1), 2 );
-Cd	= trapz( s, Cp.*repmat(cos(Ht),nSamp,1), 2 );
+Cd	= -trapz( s, Cp.*repmat(cos(Ht),nSamp,1), 2 );
 
 % Coefficient of moment, defined such that GLE nose up is positive
 Cm	= -trapz( s, ( Cp .* repmat(yc,nSamp,1) .* repmat(cos(H),nSamp,1) ), 2 ) ...

@@ -1,4 +1,4 @@
-function processStaticPressure( airfoil, dayFolder, covered, aa )
+function processStaticPressure( airfoil, dayFolder, covered, aoa )
 % Processes static pressure data taken using the Scanivalve system.
 
 
@@ -22,8 +22,8 @@ if ~exist( 'covered', 'var' )
 	covered = input( 'Which taps were covered? ' );
 end
 
-if ~exist( 'aa', 'var' )
-	aa = input( 'What was the angle of attack (in degrees)? ' );
+if ~exist( 'aoa', 'var' )
+	aoa = input( 'What was the angle of attack (in degrees)? ' );
 end
 
 %% Begin main program
@@ -46,8 +46,8 @@ nFiles = length(allFiles);
 for n=1:nFiles
 	% Extract name of specific run/case
 	run		= regexprep( allFiles{n}, '.txt', '' );
-	aa      = regexpi( run, 'aa(?<aa>[\d]+)', 'names' );
-    aa      = str2double(aa.aa);
+	aoa		= regexpi( run, 'aa(?<aa>[\d]+)', 'names' );
+    aoa		= str2double(aoa.aa);
 
 	% Load raw data from txt file
 	data	= load( fullfile(dayFolder,allFiles{n} ));
@@ -60,7 +60,7 @@ for n=1:nFiles
 	Pinf	= in2pa( data(:,5) );			% Freestream pressure, [Pa]
 	P		= psi2pa( data(:,6:end) );		% Static surface pressure, [Pa]
 
-	bc		= blockageCorrFactor( airfoil, aa );	% Blockage correction factor
+	bc		= blockageCorrFactor( airfoil, aoa );	% Blockage correction factor
 	Q		= k*( Po + Pinf )*( 1 + 2*bc );			% Dynamic pressure (with blockage correction), [Pa]
 
 	N		= size(P,1);					% Number of samples
@@ -68,8 +68,7 @@ for n=1:nFiles
 	clear data bc
 
 	% Load tap locations
-	[xc cc ut H]	= getTapLocations( airfoil );
-    H = H - aa*pi/180;
+	[xc cc ut H yc]	= getTapLocations( airfoil );
 
 	% Remove pressure data from open/unused transducers
 	P(:,ut) = [];
@@ -83,11 +82,12 @@ for n=1:nFiles
 
 	% Remove taps covered by actuators
 	xc(covered) = [];
+	yc(covered) = [];
     H(covered) = [];
 	P(:,covered) = [];
 
 	% Calculate Cp and Cl
-	[Cp Cl Cd]	= calcCpCl( xc, H, P, Pinf, Q, cc );
+	[Cp Cl Cd Cm]	= calcCpCl( xc, H, P, Pinf, Q, cc, yc, aoa );
 
 	clear Q P
 
@@ -95,9 +95,11 @@ for n=1:nFiles
 	Cp_rms	= std( Cp, 0, 1 );
 	Cl_rms	= std( Cl );
     Cd_rms  = std( Cd );
+	Cm_rms	= std( Cm);
 	Cp		= mean( Cp, 1 );
 	Cl		= mean( Cl );
     Cd      = mean( Cd );
+	Cm		= mean( Cm );
 	Tinf	= mean( Tinf );
 	Tamb	= mean( Tamb );
 	Pamb	= mean( Pamb );
@@ -118,6 +120,9 @@ for n=1:nFiles
     out.Cd		= measurement( 'Drag Coefficient', 'C_D', '', Cd );
 	out.Cd_rms	= measurement( 'RMS of Drag Coefficient', 'C_{D,rms}', '', Cd_rms );
     
+	out.Cm		= measurement( 'Moment Coefficient', 'C_M', '', Cm);
+	out.Cm_rms	= measurement( 'RMS of Moment Coefficient', 'C_{M,rms}', '', Cm_rms );
+
 	out.Tamb	= measurement( 'Ambient Temperature', 'T_{amb}', 'K', Tamb );
 	out.Pamb	= measurement( 'Ambient Pressure', 'p_{amb}', 'Pa', Pamb );
 
@@ -127,7 +132,7 @@ for n=1:nFiles
 
 	out.source	= measurement( 'Source Location', '', '', dayFolder );
 
- 	clear xc cc Cp Cp_rms Cl Cl_rms Cd Cd_rms Tamb Pamb Tinf Po Pinf
+ 	clear xc cc Cp Cp_rms Cl Cl_rms Cd Cd_rms Cm Cm_rms Tamb Pamb Tinf Po Pinf
 
 	% Timestamp for acquisition and averaging
 	out.timestamp = measurement( 'Timestamp History' );
