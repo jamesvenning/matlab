@@ -26,8 +26,9 @@ m = str2num( series(1) )/100;			% Maximum camber
 p = str2num( series(2) )/10;			% Location of maximum camber
 t = str2num( series(3:4) )/100;			% Thickness
 
-%
-x = linspace( 0, 1, 250 );
+% Generate axis along chord with more points near the nose
+x = logspace( 0, 3, 101 );
+x = (x-min(x))/range(x);
 
 % Mean camber line
 if ( m == 0 )
