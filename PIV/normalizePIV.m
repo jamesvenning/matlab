@@ -22,8 +22,8 @@ else
 		'Xo	= %d;		% Trailing edge X coordinate [mm]\n' ...
 		'Yo	= %d;		% Trailing edge Y coordinate [mm]\n' ...
 		'Zo	= %d;		% Trailing edge Z coordinate [mm]\n' ...
-		'D	= %d;		% Airfoil thickness [mm]' ...
-		], Xo, Yo, Zo, D );
+		'L	= %d;		% Characteristic Length [mm]' ...
+		], Xo, Yo, Zo, L );
 	fclose(fid);
 	
 	clear fid
@@ -48,8 +48,6 @@ for n=1:nFiles
 	Pinf	= in2pa( tc(3) );
 	
  	% Calculate the freestream velocity
-% 	sample = a.Um.value( samp_row, samp_col );
-% 	Uinf = nanmean( sample(:) );
 	[Uinf Re] = manometer( Tinf, Po, Pinf, a.Pamb.value );
 	
 	% Perform a coordinate shift
@@ -74,9 +72,9 @@ for n=1:nFiles
 		% 3. updating the units (unitless)
 		switch lower( a.(var).units )
 			case 'mm'
-				% Normalize 'mm' quantities by airfoil thickness
-				a.(var).value	= a.(var).value / D;
-				a.(var).symbol	= [ a.(var).symbol '/D' ];
+				% Normalize 'mm' quantities by characteristic length
+				a.(var).value	= a.(var).value / L;
+				a.(var).symbol	= [ a.(var).symbol '/L' ];
 				a.(var).units	= '';
 
 			case 'm/s'
@@ -93,7 +91,7 @@ for n=1:nFiles
 	end
 	
 	% Include new measurements
-	a.D		= measurement( 'Airfoil Thickness', 'D', 'mm', D );
+	a.L		= measurement( 'Characteristic Length', 'L', 'mm', L );
 	a.Tinf	= measurement( 'Freestream Temperature', 'T_\infty', 'K', Tinf );
 	a.Po	= measurement( 'Stagnation Pressure', 'p_o', 'Pa', Po );
 	a.Pinf	= measurement( 'Freestream Pressure', '-p_\infty', 'Pa', Pinf );
@@ -101,7 +99,7 @@ for n=1:nFiles
 	a.Re	= measurement( 'Reynolds Number', 'Re', '', Re );
 	
 	% Timestamp for normalization
-	stamp = [ datestr( now, 31 ) '. Normalized using D=' num2str(D) ' mm and Uinf=' num2str(Uinf) ' m/s.' ];
+	stamp = [ datestr( now, 31 ) '. Normalized using L=' num2str(L) ' mm and Uinf=' num2str(Uinf) ' m/s.' ];
 	if isfield( a, 'timestamp' )
 		a.timestamp.value{end+1} = stamp;
 	else
