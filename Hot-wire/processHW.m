@@ -49,9 +49,9 @@ for n=1:nFiles
 	% Get the time series, sampling period, and block size
 	t		= data(:,1);
 	dt		= t(2)-t(1);
-	t0		= t - dt*( 0:length(t)-1 )';		% Find the time jumps
-	blkSz	= sum( t0 < 1e-10 );				% Block size
-	nBlk	= length(t)/blkSz;					% Number of blocks
+	t0		= abs( t - dt*( 0:length(t)-1 )' );		% Find the time jumps
+	blkSz	= find( t0>1e-10, 1, 'first' )-1;		% Block size
+	nBlk	= length(t)/blkSz;						% Number of blocks
 	
 	clear t t0
 	
@@ -64,7 +64,7 @@ for n=1:nFiles
 % 		data(l1:l2,2:end) = filtfilt( b, a, data(l1:l2,2:end) );
 % 	end
 	
-	clear nBlk l1 l2
+	clear l1 l2
 	
 	% Deal out the data
 	v_HW	= data(:,2);
@@ -75,15 +75,15 @@ for n=1:nFiles
 	
 	% Convert hot-wire voltage to velocity
 	U		= cal.eq( cal.coef, v_HW );			% Black box approach
-	Um(n)	= mean( U );
+	Um		= mean( U );
 	Urms(n)	= std( U );
 	
 	clear v_HW
 	
 	% Calculate spectra from velocity
-	[PSD(:,n) f(:,n)] = calPSD( U-Um(n), blkSz, 1/dt, 'hann', 0, [0 0] );
+	[PSD(:,n) f(:,n)] = calPSD( U-Um, blkSz, 1/dt, 'hann', 0, [0 0] );
 	
-	clear U blkSz dt
+	clear U
 	
 	% Convert stagnation/freestream voltages to pressures
 	Po(n)		= in2pa( mean( 4.2610*v_Po - 1.1344 ) );		% [Pa]
@@ -109,9 +109,9 @@ Pinf	= mean( Pinf );
 % Load the ambient conditions
 ff = fullfile( d, 'ambient.txt' );
 data = load(ff);
-Tamb = f2k( data(1) );			% [K]
-Tinf = f2k( data(2) );			% [K]
-Pamb = mbar2pa( data(3) );		% [Pa]
+Tamb = f2k( mean(data(:,1)) );			% [K]
+Tinf = f2k( mean(data(:,2)) );			% [K]
+Pamb = mbar2pa( mean(data(:,3)) );		% [Pa]
 
 %%
 % Make sure values are properly ordered (x then y)
@@ -129,6 +129,7 @@ out.Urms	= measurement( 'RMS of Streamwise Velocity', 'u_{rms}', 'm/s', Urms );
 
 out.PSD		= measurement( 'PSD', '', '', PSD );
 out.f		= measurement( 'Frequency', 'f', 'Hz', f );
+out.fs		= measurement( 'Sampling Frequency', 'f_s', 'Hz', 1/dt );
 
 out.Po		= measurement( 'Stagnation Pressure', 'p_o', 'Pa', Po );
 out.Pinf	= measurement( 'Freestream Pressure', '-p_\infty', 'Pa', Pinf );
@@ -136,6 +137,18 @@ out.Pamb	= measurement( 'Ambient Pressure', 'p_{amb}', 'Pa', Pamb );
 
 out.Tinf	= measurement( 'Stagnation Temperature', 'T_\infty', 'K', Tinf );
 out.Tamb	= measurement( 'Ambient Temperature', 'T_{amb}', 'K', Tamb );
+
+out.source	= measurement( 'Source Location', '', '', d );
+
+% Timestamp for acquisition and processing
+out.timestamp = measurement( 'Timestamp History' );
+
+day = regexpi( d, '[0-9]{8}[\\a-z]', 'match', 'once' );		% Extract the day from the folder tree
+acqdate = [ day(1:4) '-' day(5:6) '-' day(7:8) ' 12:00:00' ];
+out.timestamp.value{1} = [ acqdate '. Acquired using hot-wire at ' num2str(1/dt) ' Hz.' ];
+
+procdate = datestr( now, 31 );
+out.timestamp.value{2} = [ procdate '. Spectra calculated using ' num2str(nBlk) ' blocks of ' num2str(blkSz) '.' ];
 
 % Save the results
 ff = [ d(1:end-1) '.mat' ];			% Output file matches test case
