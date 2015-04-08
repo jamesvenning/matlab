@@ -25,8 +25,8 @@ for n=1:nFiles
 	% Load the ambient conditions
 	ff = fullfile( ds{n}, 'ambient.txt' );
 	data = load( ff );
-	Tinf = f2k( data(2) );			% [K]
-	Pamb = mbar2pa( data(3) );		% [Pa]
+	Tinf = f2k( mean(data(:,2)) );			% [K]
+	Pamb = mbar2pa( mean(data(:,3)) );		% [Pa]
 	
 	% Load the velocity and pressure data
 	ff = fullfile( ds{n}, 'x0.000000_y0.000000.txt' );
