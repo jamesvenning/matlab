@@ -75,13 +75,13 @@ for n=1:nFiles
 	
 	% Convert hot-wire voltage to velocity
 	U		= cal.eq( cal.coef, v_HW );			% Black box approach
-	Um		= mean( U );
+	Um(n)	= mean( U );
 	Urms(n)	= std( U );
 	
 	clear v_HW
 	
 	% Calculate spectra from velocity
-	[PSD(:,n) f(:,n)] = calPSD( U-Um, blkSz, 1/dt, 'hann', 0, [0 0] );
+	[PSD(:,n) f(:,n)] = calPSD( U-Um(n), blkSz, 1/dt, 'hann', 0, [0 0] );
 	
 	clear U
 	
