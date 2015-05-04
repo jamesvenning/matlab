@@ -151,32 +151,59 @@ dudz(:,:,2:end-1) = (u(:,:,3:end)-u(:,:,1:end-2))./(z(:,:,3:end)-z(:,:,1:end-2))
 dvdz(:,:,2:end-1) = (v(:,:,3:end)-v(:,:,1:end-2))./(z(:,:,3:end)-z(:,:,1:end-2));
 dwdz(:,:,2:end-1) = (w(:,:,3:end)-w(:,:,1:end-2))./(z(:,:,3:end)-z(:,:,1:end-2));
     
-    %Loop through all coordinates in flow-field calculating the criteria
-    %for each point.
-for n = 2:S(1)-1
-    for m = 2:S(2)-1
-        for k = 2:S(3)-1
-                %Calculates 3-by-3 Velocity Gradient Tensor
-            if flag2D   %Makes sure that incompressibility condition is satisfied for 2-D data.
-                A = [dudx(n,m,k) dudy(n,m,k) dudz(n,m,k); dvdx(n,m,k) dvdy(n,m,k) dvdz(n,m,k); dwdx(n,m,k) dwdy(n,m,k) -dudx(n,m,k)-dvdy(n,m,k)];
-            else
-                A = [dudx(n,m,k) dudy(n,m,k) dudz(n,m,k); dvdx(n,m,k) dvdy(n,m,k) dvdz(n,m,k); dwdx(n,m,k) dwdy(n,m,k) dwdz(n,m,k)];
-            end
+%     %Loop through all coordinates in flow-field calculating the criteria
+%     %for each point.
+% for n = 2:S(1)-1
+%     for m = 2:S(2)-1
+%         for k = 2:S(3)-1
+%                 %Calculates 3-by-3 Velocity Gradient Tensor
+%             if flag2D   %Makes sure that incompressibility condition is satisfied for 2-D data.
+%                 A = [dudx(n,m,k) dudy(n,m,k) dudz(n,m,k); dvdx(n,m,k) dvdy(n,m,k) dvdz(n,m,k); dwdx(n,m,k) dwdy(n,m,k) -dudx(n,m,k)-dvdy(n,m,k)];
+%             else
+%                 A = [dudx(n,m,k) dudy(n,m,k) dudz(n,m,k); dvdx(n,m,k) dvdy(n,m,k) dvdz(n,m,k); dwdx(n,m,k) dwdy(n,m,k) dwdz(n,m,k)];
+%             end
+% 
+%             ls = eig(A); %eigenvalues of tensor
+%             L(n,m,k) = max(unique(abs(imag(ls))));  %Swirling Strength
+% 
+%             Q(n,m,k) = -sum(sum(A.*A'))/2;    %Q-criterion
+%             R = det(A);
+%             D(n,m,k) = (Q(n,m,k)/3)^3 +(R/2)^2;  %Delta-criterion
+% 
+%             SR = (A +A')/2; %Strain rate tensor
+%             OR = (A -A')/2; %Vorticity tensor
+%             ls = sort(eig(SR^2 +OR^2));
+%             L2(n,m,k) = ls(2);  %\lambda_2-criterion
+%         end
+%     end
+% end
 
-            ls = eig(A); %eigenvalues of tensor
-            L(n,m,k) = max(unique(abs(imag(ls))));  %Swirling Strength
+K = numel(u);
+parfor k = 1:K
+		%Calculates 3-by-3 Velocity Gradient Tensor
+	if flag2D   %Makes sure that incompressibility condition is satisfied for 2-D data.
+		A = [dudx(k) dudy(k) dudz(k); dvdx(k) dvdy(k) dvdz(k); dwdx(k) dwdy(k) -dudx(k)-dvdy(k)];
+	else
+		A = [dudx(k) dudy(k) dudz(k); dvdx(k) dvdy(k) dvdz(k); dwdx(k) dwdy(k) dwdz(k)];
+	end
 
-            Q(n,m,k) = -sum(sum(A.*A'))/2;    %Q-criterion
-            R = det(A);
-            D(n,m,k) = (Q(n,m,k)/3)^3 +(R/2)^2;  %Delta-criterion
+	ls = eig(A); %eigenvalues of tensor
+	L(k) = max(unique(abs(imag(ls))));  %Swirling Strength
 
-            SR = (A +A')/2; %Strain rate tensor
-            OR = (A -A')/2; %Vorticity tensor
-            ls = sort(eig(SR^2 +OR^2));
-            L2(n,m,k) = ls(2);  %\lambda_2-criterion
-        end
-    end
+	Q(k) = -sum(sum(A.*A'))/2;    %Q-criterion
+	R = det(A);
+	D(k) = (Q(k)/3)^3 +(R/2)^2;  %Delta-criterion
+
+	SR = (A +A')/2; %Strain rate tensor
+	OR = (A -A')/2; %Vorticity tensor
+	ls = sort(eig(SR^2 +OR^2));
+	L2(k) = ls(2);  %\lambda_2-criterion
 end
+
+L = reshape(L,S);
+Q = reshape(L,S);
+D = reshape(L,S);
+L2 = reshape(L,S);
 
 %% OUTPUT Formatting %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if sum(dli==dlo)~=3 %Reorders the matrices to conform to input format
