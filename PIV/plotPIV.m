@@ -1,36 +1,65 @@
-function [ h ] = plotPIV( fs, d )
+function [ h ] = plotPIV( varargin )
+%PLOTPIV plots a colormap of the listed quantities for each selected MAT
+%file.
+%	Valid quantities: 'u','v','vort','tke'
 
 
-if ~exist( 'fs', 'var' )
-	[fs d] = uigetfile( '.mat', 'MultiSelect', 'on' );
+% Which quantities should be plotted?
+if nargin<1,	plist = {'u','v'};
+else			plist = varargin;
 end
+nPlots = length(plist);
 
+% Which data should they be plotted for?
+[fs,d] = uigetfile( '.mat', 'MultiSelect', 'on' );
 if ischar(fs), fs={fs}; end
 
+% Loop through each file
 nFiles = length(fs);
 for n=1:nFiles
 	
 	ff = fullfile( d, fs{n} );
 	load( ff );
 	
+	% One figure per file
 	h(n) = figure;
 	
-	subplot(2,1,1); axis equal;
-		pcolor( X.value, Y.value, Um.value ); shading interp;
-		%hold on; drawNACA( '0015', [1 0], [0 0] );
-		c = colorbar; set( get(c,'ylabel'), 'string', Um.symbol );
+	% Loop through each quantity
+	for m=1:nPlots
+		
+		% One subfigure per quantity
+		subplot( nPlots, 1, m );
+		
+		switch lower(plist{m})
+			case {'u','um'}
+				pcolor( X.value, Y.value, Um.value ); 
+				title( Um.name );
+				
+			case {'v','vm'}
+				pcolor( X.value, Y.value, Vm.value );
+				title( Vm.name );
+				
+			case {'urms'}
+				pcolor( X.value, Y.value, Urms.value );
+				title( Urms.name );
+				
+			case {'vrms'}
+				pcolor( X.value, Y.value, Vrms.value );
+				title( Vrms.name );
+				
+			case {'vort'}
+				pcolor( X.value, Y.value, curl(X.value,Y.value,Um.value,Vm.value) );
+				title( 'Vorticity' );
+				
+			case {'tke'}
+				% For another time
+		
+		end
+		
+		shading interp;
+		colorbar;
 		ylabel( Y.describe );
-		title( Um.name );
 		
-	if isempty(Um.units), caxis([-0.5 1.5]); end
-	
-	subplot(2,1,2); axis equal;
-		pcolor( X.value, Y.value, Vm.value ); shading interp;
-		%hold on; drawNACA( '0015', [1 0], [0 0] );
-		c = colorbar; set( get(c,'ylabel'), 'string', Vm.symbol );
-		xlabel( X.describe ); ylabel( Y.describe );
-		title( Vm.name );
-		
-	if isempty(Vm.units), caxis([-0.6 0.4]); end
+	end
 		
 end
