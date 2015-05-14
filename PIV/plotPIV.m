@@ -21,8 +21,8 @@ for n=1:nFiles
 	ff = fullfile( d, fs{n} );
 	load( ff );
 	
-	if any(~cellfun(@isempty,strfind(timestamp.value,'Normalized')))
-		norm = '/u_\infty';
+	if exist('timestamp.value','var') && any(~cellfun(@isempty,strfind(timestamp.value,'Normalized')))
+		norm = '/u_\infty';g
 		norm2 = 'u_\infty^2';
 	else
 		norm = '';
