@@ -64,7 +64,7 @@ for n=1:nFiles
 			case {'vort'}
 				vort = curl( X.value, Y.value, Um.value, Vm.value );
 				pcolor( X.value, Y.value, vort );
-				title([ 'Vorticity, \nabla\crossU' norm ]);
+				title([ 'Vorticity, \nabla\timesU' norm ]);
 				clear vort;
 				
 			case {'ss','swirl'}
