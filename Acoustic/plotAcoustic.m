@@ -16,11 +16,19 @@ order	= [];						% Specific ordering of spectra
 if ~isempty(varargin) && iscell(varargin{1})
 	fs = varargin{1};
 else
-	fs = uigetfile( '.mat', 'MultiSelect', 'on' );
+	[fs d] = uigetfile( '.mat', 'MultiSelect', 'on' );
+	fs = fullfile(d,fs);
 	if ischar(fs), fs={fs}; end
 end
 
 % Look for additional plotting flags
+if any( strcmpi(varargin,'length') )
+	% Override the characteristic length
+	i = find( strcmpi(varargin,'length') );
+	if isnumeric(varargin{i+1}),	c1 = varargin{i+1};
+	else							error('Length flag must be followed by numeric value.');
+	end
+end
 if any( strcmpi(varargin,'separation') )
 	% Override the seperation between spectra
 	i = find( strcmpi(varargin,'separation') );
