@@ -201,9 +201,9 @@ parfor k = 1:K
 end
 
 L = reshape(L,S);
-Q = reshape(L,S);
-D = reshape(L,S);
-L2 = reshape(L,S);
+Q = reshape(Q,S);
+D = reshape(D,S);
+L2 = reshape(L2,S);
 
 %% OUTPUT Formatting %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if sum(dli==dlo)~=3 %Reorders the matrices to conform to input format
